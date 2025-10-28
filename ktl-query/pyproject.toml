@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ktl-query"
+version = "1.0.0"
+dependencies = ["pyyaml"]
+description = "Backend CLI tool for kettlebell tracking"
+
+[project.scripts]
+ktl-query = "ktl_query:main"
