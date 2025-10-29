@@ -149,7 +149,9 @@ def load(file):
                     for tag in exercise_data['tags']:
                         cursor.execute(f'INSERT INTO exercise_tags VALUES ("{exercise_name}", "{tag}")')
         else:
-            pass # TODO: Error.
+            raise KeyError('No exercises defined in config.exercises')
+    else:
+        raise KeyError('No config defined')
 
     if 'journal' in data:
         for date_name, date_data in sorted(data['journal'].items()):
@@ -161,7 +163,9 @@ def load(file):
                                 for eset in _parse_strength_exercise(str(exercise_data)):
                                     cursor.execute(f'INSERT INTO strength_sets VALUES ("{date_name}", "{exercise_name}", "{eset.value}", "{eset.unit}", "{eset.reps}")')
                         else:
-                            pass # TODO: Error.
+                            raise KeyError(f'Exercise "{exercise_name}" has no type set in config.exercises.{exercise_name}"')
+                    else:
+                        raise NameError(f'Exercise "{exercise_name}" for date "{date_name}" is not defined in config.exercises."')
 
     conn.commit()
     return conn
