@@ -129,7 +129,7 @@ def load(file):
     with open(file, 'r') as f:
         data = yaml.safe_load(f.read())
 
-    conn = sqlite3.connect(':memory:')
+    conn = sqlite3.connect(':memory:', check_same_thread=False)
     cursor = conn.cursor()
 
     cursor.execute('CREATE TABLE tags(name)')

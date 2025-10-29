@@ -3,6 +3,8 @@
 KTL is a command-line tool for plaintext fitness, weight and nutrition tracking.
 It supports both strength and cardio exercises.
 
+KTL comes in two separate modules, `ktl-query`, which handles the backend conversion from the YAML journal into a `sqlite3` database, and `ktl-web`, which server a website that can query set database.
+
 ## Example YAML journal
 
 ```yaml
@@ -60,10 +62,11 @@ journal:
 
 ## Usage
 
-Right now, the only way to interface with KTL is throw `KTL-query`, a tool that converts the YAML journal into a in-memory `sqlite3` database.
-It can be used from the command line or as a python module.
+Right now, the best supported way to interface with KTL is through `KTL-query`, available as both a command line tool and as a Python module, as `ktl-web` is still lacking most features I want from it.
 
-For example, to get your PRs for each rep count in the front squat you can make the following query:
+## ktl-query examples
+
+For example, to list your PRs for each rep count in the front squat you can make the following query:
 
 ```sh
 ktl-query '
@@ -71,15 +74,23 @@ ktl-query '
   FROM strength_sets
   WHERE exercise = "front-squat"
   GROUP BY reps
-' FILE.yaml
+' FILE
 ```
 
-Or to list your weight for each day:
+Or to list your weight for each day that you entered it:
 ```sh
 ktl-query '
   SELECT date, weight
   FROM meassurements
-' FILE.yaml
+' FILE
+```
+
+## ktl-web
+
+`ktl-web` serves a website in `localhost:5000`.
+It can be executed with:
+```sh
+ktl-web FILE
 ```
 
 ## Installation

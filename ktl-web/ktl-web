@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+
+import argparse
+import flask
+import numpy as np
+
+import ktl_query
+
+conn = None
+
+app = flask.Flask(__name__)
+
+@app.route("/", methods=["GET"])
+def index():
+    return flask.render_template('index.html.j2')
+
+@app.route("/prs", methods=["GET"])
+def prs():
+    exercise = flask.request.args.get("exercise")
+    rows = []
+    cursor = conn.cursor()
+    if exercise:
+        query = f'''
+            SELECT exercise, reps, MAX(weight)
+            FROM strength_sets
+            WHERE exercise = ?
+            GROUP BY exercise, reps
+            ORDER BY exercise, CAST(reps AS INT) DESC
+        '''
+        cursor.execute(query, [exercise])
+    else:
+        query = f'''
+            SELECT exercise, reps, MAX(weight)
+            FROM strength_sets
+            GROUP BY exercise, reps
+            ORDER BY exercise, CAST(reps AS INT) DESC
+        '''
+        cursor.execute(query)
+    srows = cursor.fetchall()
+    last_i = -1
+    for i, row in enumerate(srows):
+        if last_i != -1 and row[0] == srows[last_i][0] and int(row[1]) < int(srows[last_i][1]) and float(row[2]) <= float(srows[last_i][2]):
+            pass
+        else:
+            epley = float(row[2]) * (1.0 + float(row[1]) / 30.0)
+            brzycki = float(row[2]) * 36 / (37 - float(row[1]))
+            lombardi = float(row[2]) * pow(float(row[1]), 0.1)
+            row += (round(np.mean([epley, brzycki, lombardi]), 2),)
+            rows += [row]
+            last_i = i
+
+    return flask.render_template('prs.html.j2', rows=enumerate(rows))
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog='ktl-web', description='Web server for KTL')
+    parser.add_argument('db_file_path')
+    args = parser.parse_args()
+    conn = ktl_query.load(args.db_file_path)
+    app.run(debug=True)

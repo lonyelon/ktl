@@ -1,0 +1,33 @@
+{% extends "base.html.j2" %}
+{% block content %}
+  <h1>PR search</h1>
+  <form method="GET">
+    <input name="exercise" type="text" placeholder="Exercise name" value="{{ request.args.get('exercise','') }}">
+    <button type="submit">Search</button>
+  </form>
+  
+  {% if rows %}
+    <table>
+      <thead>
+        <tr>
+          <th>Exercise</th>
+          <th>Reps</th>
+          <th>Max Weight</th>
+          <th>1RM</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i, row in rows %}
+          <tr class='table-row-{{ i % 2 }}'>
+            <td><a href="/prs?exercise={{ row[0] }}">{{ row[0] }}</a></td>
+            <td class="table-number">{{ row[1] }}</td>
+            <td class="table-number">{{ row[2] }}</td>
+            <td class="table-number">{{ row[3] }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% elif request.args.get('exercise') %}
+    <p>No results found for "{{ request.args.get('exercise') }}".</p>
+  {% endif %}
+{% endblock %}

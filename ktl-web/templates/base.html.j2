@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>KTL PR Finder</title>
+    <style>
+      th {
+        background-color: #dddddd;
+      }
+      th, td {
+        min-width: 6em;
+      }
+      .table-row-0 {
+        background-color: #eeeeee;
+      }
+      .table-number {
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <h1>Index</h1>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/prs">PRs</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>
