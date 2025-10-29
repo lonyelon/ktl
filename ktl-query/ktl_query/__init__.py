@@ -135,6 +135,7 @@ def load(file):
     cursor.execute('CREATE TABLE tags(name)')
     cursor.execute('CREATE TABLE exercises(name, type)')
     cursor.execute('CREATE TABLE exercise_tags(exercise, tag)')
+    cursor.execute('CREATE TABLE nutrition(date, calories)')
     cursor.execute('CREATE TABLE strength_sets(date, exercise, weight, unit, reps)')
     cursor.execute('CREATE TABLE endurance_sets(date, exercise, distance, distance_unit, time, time_unit, speed, speed_unit)')
 
@@ -166,6 +167,17 @@ def load(file):
                             raise KeyError(f'Exercise "{exercise_name}" has no type set in config.exercises.{exercise_name}"')
                     else:
                         raise NameError(f'Exercise "{exercise_name}" for date "{date_name}" is not defined in config.exercises."')
+            if 'nutrition' in date_data:
+                if 'calories' in date_data['nutrition']:
+                    if isinstance(date_data['nutrition']['calories'], dict):
+                        if not 'min' in date_data['nutrition']['calories']:
+                            raise NameError(f'journal.{date_name}.nutrition.calories is a dict but has no "min" key')
+                        if not 'max' in date_data['nutrition']['calories']:
+                            raise NameError(f'journal.{date_name}.nutrition.calories is a dict but has no "max" key')
+                        calories = (date_data['nutrition']['calories']['min'] + date_data['nutrition']['calories']['max']) / 2
+                        cursor.execute(f'INSERT INTO nutrition VALUES ("{date_name}", "{int(calories)}")')
+                    else:
+                        cursor.execute(f'INSERT INTO nutrition VALUES ("{date_name}", "{date_data["nutrition"]["calories"]}")')
 
     conn.commit()
     return conn
