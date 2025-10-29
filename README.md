@@ -38,7 +38,7 @@ journal:
   # Each key is a date.
   2025-10-19:
     # (OPTIONAL) we can register our weight in both kg and lbs:
-    meassurements:
+    measurements:
       weight: 90kg
 
     # (OPTIONAL) workout for the day. In this case two exercises from the
@@ -81,7 +81,7 @@ Or to list your weight for each day that you entered it:
 ```sh
 ktl-query '
   SELECT date, weight
-  FROM meassurements
+  FROM measurements
 ' FILE
 ```
 

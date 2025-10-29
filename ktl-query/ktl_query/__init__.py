@@ -136,7 +136,7 @@ def load(file):
     cursor.execute('CREATE TABLE exercises(name, type)')
     cursor.execute('CREATE TABLE exercise_tags(exercise, tag)')
     cursor.execute('CREATE TABLE nutrition(date, calories)')
-    cursor.execute('CREATE TABLE meassurements(date, weight, weight_unit)')
+    cursor.execute('CREATE TABLE measurements(date, weight, weight_unit)')
     cursor.execute('CREATE TABLE strength_sets(date, exercise, weight, unit, reps)')
     cursor.execute('CREATE TABLE endurance_sets(date, exercise, distance, distance_unit, time, time_unit, speed, speed_unit)')
 
@@ -185,16 +185,16 @@ def load(file):
                         cursor.execute(f'INSERT INTO nutrition VALUES ("{date_name}", "{int(calories)}")')
                     else:
                         cursor.execute(f'INSERT INTO nutrition VALUES ("{date_name}", "{date_data["nutrition"]["calories"]}")')
-            if 'meassurements' in date_data:
-                if 'weight' in date_data['meassurements']:
-                    weight = re.sub(r'[a-z]+$', '', date_data['meassurements']['weight'])
-                    unit = re.sub(r'^[0-9]+(\.[0-9]+)?', '', date_data['meassurements']['weight'])
+            if 'measurements' in date_data:
+                if 'weight' in date_data['measurements']:
+                    weight = re.sub(r'[a-z]+$', '', date_data['measurements']['weight'])
+                    unit = re.sub(r'^[0-9]+(\.[0-9]+)?', '', date_data['measurements']['weight'])
 
                     if unit != 'kg' and unit != 'lbs':
                         raise ValueError(f'journal.{date_name}.meassuremets.weight has an invalid unit: "{unit}"')
 
                     cursor.execute(f'''
-                        INSERT INTO meassurements
+                        INSERT INTO measurements
                         VALUES ("{date_name}",
                                 "{weight}",
                                 "{unit}")''')
