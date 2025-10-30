@@ -4,6 +4,64 @@
     <meta charset="utf-8">
     <title>KTL PR Finder</title>
     <style>
+      html {
+        min-height: 100%;
+
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        display: grid;
+
+        min-height: 100vh;
+
+        grid-template-columns: 20em auto;
+
+        margin: 0;
+        padding: 0;
+      }
+      header {
+        color: #ffffff;
+        background-color: #111111;
+      }
+      header h1 {
+        width: 100%;
+
+        text-align: center;
+      }
+      header nav ul {
+        padding: 0;
+
+        text-align: right;
+      }
+      header nav ul li a {
+        display: block;
+
+        padding: 10px 20px;
+
+        color: #ffffff;
+
+        text-decoration: none;
+        font-weight: bold;
+      }
+      header nav ul li .alternate-0 {
+        background-color: #313131;
+      }
+      header nav ul li .alternate-1 {
+        background-color: #212121;
+      }
+      header nav ul li a:hover {
+        color: #000000;
+        background-color: #ffffff;
+      }
+
+      main {
+        padding: 10px 48px;
+      }
+      main * {
+        width: 100%;
+      }
+
       th {
         background-color: #dddddd;
       }
@@ -22,11 +80,10 @@
     <header>
       <h1>KTL-web</h1>
       <nav>
-        <h2>Index</h2>
         <ul>
-          <li><a href="/">Home</a></li>
-          <li><a href="/prs">PRs</a></li>
-          <li><a href="/training">Training</a></li>
+          <li><a class="alternate-0" href="/">Home</a></li>
+          <li><a class="alternate-1" href="/prs">PRs</a></li>
+          <li><a class="alternate-0" href="/training">Training</a></li>
         </ul>
       </nav>
     </header>
