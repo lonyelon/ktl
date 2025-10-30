@@ -97,8 +97,8 @@ def sets_to_str(L):
     return s
 
 
-@app.route("/training", methods=["GET"])
-def training():
+@app.route("/training-plan", methods=["GET"])
+def training_plan():
     TRAINING_PLAN = {
         'Upper 1': [
             ('bench-press',                 6, 10, 1),
@@ -190,7 +190,7 @@ def training():
         else:
             out_data[day] = out_day_data
 
-    return flask.render_template('training.html.j2', days=out_data)
+    return flask.render_template('training-plan.html.j2', days=out_data)
 
 
 if __name__ == "__main__":
