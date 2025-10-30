@@ -167,9 +167,9 @@ def load(file):
                                         INSERT INTO strength_sets
                                         VALUES ("{date_name}",
                                                 "{exercise_name}",
-                                                "{eset.value}",
+                                                {eset.value},
                                                 "{eset.unit}",
-                                                "{eset.reps}")''')
+                                                {eset.reps})''')
                         else:
                             raise KeyError(f'Exercise "{exercise_name}" has no type set in config.exercises.{exercise_name}"')
                     else:
@@ -207,11 +207,11 @@ def _print_list(L):
     maxx = [0.0 for i in range(0, len(L[0]))]
     for l in L:
         for i, e in enumerate(l):
-            if maxx[i] < len(e):
-                maxx[i] = len(e)
+            if maxx[i] < len(str(e)):
+                maxx[i] = len(str(e))
     for l in L:
         for i, e in enumerate(l):
-            print(e, end=' ' * (maxx[i] - len(e) + 1))
+            print(e, end=' ' * (maxx[i] - len(str(e)) + 1))
         print()
 
 

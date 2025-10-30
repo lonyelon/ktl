@@ -3,16 +3,19 @@
 import argparse
 import flask
 import numpy as np
+import re
 
 import ktl_query
 
-conn = None
 
+conn = None
 app = flask.Flask(__name__)
+
 
 @app.route("/", methods=["GET"])
 def index():
     return flask.render_template('index.html.j2')
+
 
 @app.route("/prs", methods=["GET"])
 def prs():
@@ -21,19 +24,19 @@ def prs():
     cursor = conn.cursor()
     if exercise:
         query = f'''
-            SELECT exercise, reps, MAX(weight)
+            SELECT exercise, reps, MAX(weight), unit
             FROM strength_sets
             WHERE exercise = ?
             GROUP BY exercise, reps
-            ORDER BY exercise, CAST(reps AS INT) DESC
+            ORDER BY exercise, reps DESC
         '''
         cursor.execute(query, [exercise])
     else:
         query = f'''
-            SELECT exercise, reps, MAX(weight)
+            SELECT exercise, reps, MAX(weight), unit
             FROM strength_sets
             GROUP BY exercise, reps
-            ORDER BY exercise, CAST(reps AS INT) DESC
+            ORDER BY exercise, reps DESC
         '''
         cursor.execute(query)
     srows = cursor.fetchall()
@@ -42,14 +45,153 @@ def prs():
         if last_i != -1 and row[0] == srows[last_i][0] and int(row[1]) < int(srows[last_i][1]) and float(row[2]) <= float(srows[last_i][2]):
             pass
         else:
-            epley = float(row[2]) * (1.0 + float(row[1]) / 30.0)
-            brzycki = float(row[2]) * 36 / (37 - float(row[1]))
-            lombardi = float(row[2]) * pow(float(row[1]), 0.1)
-            row += (round(np.mean([epley, brzycki, lombardi]), 2),)
-            rows += [row]
+            rm_calc = np.mean([
+                float(row[2]) * (1.0 + float(row[1]) / 30.0),
+                float(row[2]) * 36 / (37 - float(row[1])),
+                float(row[2]) * pow(float(row[1]), 0.1)
+            ])
+            rows += [(
+                row[0],
+                row[1],
+                f"{re.sub(r'\.0+$', f'', str(row[2]))} {row[3]}",
+                f"{re.sub(r'\.0+$', f'', str(round(rm_calc * 4)/4))} {row[3]}",
+            )]
             last_i = i
 
     return flask.render_template('prs.html.j2', rows=enumerate(rows))
+
+
+def sets_to_str(L):
+    D = dict()
+
+    for l in L:
+        if f'{l[0]}{l[1]}' in D:
+            D[f'{l[0]}{l[1]}'] += [l[2]]
+        else:
+            D[f'{l[0]}{l[1]}'] = [l[2]]
+
+    s = ''
+    for j, k in enumerate(D.keys()):
+        v = D[k]
+        s += f'{k}x'
+        if len(v) == 1:
+            s += str(v[0])
+        else:
+            equal = True
+            for vv in v:
+                if vv != v[0]:
+                    equal = False
+                    break
+            if equal:
+                s += f'{v[0]}x{len(v)}'
+            else:
+                s += '('
+                for i, l in enumerate(reversed(sorted(v))):
+                    s += str(l)
+                    if i != len(v) - 1:
+                        s += '+'
+                s += ')'
+        if j != len(D.keys()) - 1:
+            s += ' '
+
+    return s
+
+
+@app.route("/training", methods=["GET"])
+def training():
+    TRAINING_PLAN = {
+        'Upper 1': [
+            ('bench-press',                 6, 10, 1),
+            ('larsen-press',                6, 10, 3),
+            ('rows',                        8, 12, 3),
+            ('press',                       6, 10, 2),
+            ('lat-pulldown-machine-cross',  8, 12, 3),
+            ('lu-raise',                   14, 18, 2),
+            ('overhead-triceps',           10, 14, 3),
+        ],
+        'Upper 2': [
+            ('pull-ups',                    6, 10, 3),
+            ('press',                       4,  6, 3),
+            ('rows',                        6, 10, 3),
+            ('incline-bench-press',         6, 10, 3),
+            ('bicep-curl-machine-cross',    8, 12, 3),
+            ('face-pulls',                 16, 24, 2),
+        ],
+        'Lower 1': [
+            ('leg-press',                    6, 10, 1),
+            ('front-squat',                  6, 10, 3),
+            ('romanian-dl',                  6, 10, 2),
+            ('walking-lunges',              20, 28, 3),
+            ('leg-curl',                    12, 18, 3),
+            ('calves-press',                12, 18, 4),
+        ],
+        'Lower 2': [
+            ('hack-squat',                   6, 20, 1),
+            ('front-squat',                  6, 10, 3),
+            ('romanial-dl',                 10, 14, 3),
+            ('leg-press',                   10, 14, 3),
+            ('leg-curl',                     6, 10, 2),
+            ('calves-press',                12, 18, 4),
+        ],
+    }
+
+    out_data = dict()
+    cursor = conn.cursor()
+    for day, day_data in TRAINING_PLAN.items():
+        out_day_data = []
+        for i, exercise in enumerate(day_data):
+            query = f'''
+                SELECT s.weight, s.unit, s.reps
+                FROM
+                    strength_sets as s,
+                    (
+                        SELECT date, exercise
+                        FROM strength_sets
+                        WHERE exercise = ? and reps >= ? and reps <= ?
+                        ORDER BY date DESC
+                        LIMIT 1
+                    ) as last
+                WHERE s.date = last.date and s.exercise = last.exercise
+            '''
+            cursor.execute(query, (exercise[0], exercise[1], exercise[2]))
+            last_sets = cursor.fetchall()
+            if len(last_sets) > 0:
+                last_sets = sets_to_str(last_sets)
+
+                query = f'''
+                    SELECT s.weight, s.unit, s.reps
+                    FROM
+                        strength_sets as s,
+                        (
+                            SELECT date, exercise
+                            FROM strength_sets
+                            WHERE exercise = ?
+                            GROUP BY date
+                            ORDER BY weight DESC, reps DESC LIMIT 1
+                        ) as pr
+                    WHERE s.date = pr.date and s.exercise = pr.exercise
+                '''
+                cursor.execute(query, (exercise[0],))
+                best_sets = sets_to_str(cursor.fetchall())
+            else:
+                last_sets = 'None'
+                best_sets = 'None'
+
+            out_day_data += [(
+                i % 2,
+                exercise[0],
+                f'{exercise[1]}-{exercise[2]}',
+                exercise[3],
+                last_sets,
+                best_sets,
+            )]
+        if day in out_data:
+            out_data[day] += out_day_data
+        else:
+            out_data[day] = out_day_data
+
+    return flask.render_template('training.html.j2', days=out_data)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='ktl-web', description='Web server for KTL')

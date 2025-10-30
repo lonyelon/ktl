@@ -1,0 +1,29 @@
+{% extends "base.html.j2" %}
+{% block content %}
+  <h2>Training</h2>
+  {% for day_name, day in days.items() %}
+    <h3>{{ day_name }}</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Exercise</th>
+          <th>Target reps</th>
+          <th>Target sets</th>
+          <th>Last</th>
+          <th>Best</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in day %}
+          <tr class='table-row-{{row[0]}}'>
+            <td><a href="/prs?exercise={{ row[1] }}">{{ row[1] }}</a></td>
+            <td class="table-number">{{ row[2] }}</td>
+            <td class="table-number">{{ row[3] }}</td>
+            <td class="table-number">{{ row[4] }}</td>
+            <td class="table-number">{{ row[5] }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+{% endblock %}

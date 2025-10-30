@@ -1,6 +1,6 @@
 {% extends "base.html.j2" %}
 {% block content %}
-  <h1>PR search</h1>
+  <h2>PR search</h2>
   <form method="GET">
     <input name="exercise" type="text" placeholder="Exercise name" value="{{ request.args.get('exercise','') }}">
     <button type="submit">Search</button>
@@ -12,8 +12,8 @@
         <tr>
           <th>Exercise</th>
           <th>Reps</th>
-          <th>Max Weight</th>
-          <th>1RM</th>
+          <th>Weight</th>
+          <th>Estimated 1RM</th>
         </tr>
       </thead>
       <tbody>
