@@ -193,6 +193,40 @@ def training_plan():
     return flask.render_template('training-plan.html.j2', days=out_data)
 
 
+@app.route("/training-log", methods=["GET"])
+def training_log():
+    date = flask.request.args.get("date")
+    exercise = flask.request.args.get("exercise")
+
+    conditional = str()
+    params = tuple()
+    if date and exercise:
+        conditional = 'WHERE date = ? and exercise = ?'
+        params = (date, exercise,)
+    elif date:
+        conditional = 'WHERE date = ?'
+        params = (date,)
+    if exercise:
+        conditional = 'WHERE exercise = ?'
+        params = (exercise,)
+
+    cursor = conn.cursor()
+    query = f'''
+        SELECT date, exercise, weight, unit, reps
+        FROM strength_sets
+        {conditional}
+        ORDER BY date DESC, exercise
+    '''
+    cursor.execute(query, params)
+    in_data = cursor.fetchall()
+
+    data = list()
+    for i, row in enumerate(in_data):
+        data += [(i % 2, row[0], row[1], row[2], row[3], row[4])]
+
+    return flask.render_template('training-log.html.j2', data=data, exercise=exercise)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='ktl-web', description='Web server for KTL')
     parser.add_argument('db_file_path')

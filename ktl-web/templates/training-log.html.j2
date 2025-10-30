@@ -1,0 +1,90 @@
+{% extends "base.html.j2" %}
+{% block content %}
+  {% if exercise is not none %}
+    <h2>Training log for the {{exercise}}</h2>
+    <canvas id="trainingChart" width="800" height="400"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script>
+      const rawData = {{ data|tojson }};
+      const repMap = {};
+      rawData.forEach(([_, date, exercise, weight, unit, reps]) => {
+        reps = reps.toString(); // use string keys
+        if (!repMap[reps]) repMap[reps] = {};
+        if (!repMap[reps][date]) repMap[reps][date] = [];
+        repMap[reps][date].push(parseFloat(weight));
+      });
+    
+      const datasets = Object.entries(repMap).map(([reps, dateWeights]) => {
+        const entries = Object.entries(dateWeights)
+          .map(([date, weights]) => ({
+            x: new Date(date),
+            y: weights.reduce((a, b) => a + b, 0) / weights.length
+          }))
+          .sort((a, b) => a.x - b.x);
+    
+        return {
+          label: `${reps} reps`,
+          data: entries,
+          borderWidth: 2,
+          tension: 0,
+          fill: false,
+          pointRadius: 5
+        };
+      });
+    
+      const ctx = document.getElementById("trainingChart").getContext("2d");
+      new Chart(ctx, {
+        type: "line",
+        data: { datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: "{{exercise}} progress by rep count"
+            },
+            legend: {
+              display: true,
+              position: "bottom"
+            }
+          },
+          scales: {
+            x: {
+              type: "time",
+              time: { unit: "day" },
+              title: { display: true, text: "Date" }
+            },
+            y: {
+              beginAtZero: false,
+              title: { display: true, text: "Weight (kg)" }
+            }
+          }
+        }
+      });
+    </script>
+  {% else %}
+    <h2>Training log</h2>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Exercise</th>
+        <th>Weight</th>
+        <th>Reps</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in data %}
+        <tr class='table-row-{{row[0]}}'>
+          <td><a href="/training-log?date={{ row[1] }}">{{ row[1] }}</a></td>
+          <td class="table-number"><a href="/training-log?exercise={{ row[2] }}">{{ row[2] }}</a></td>
+          <td class="table-number">{{ row[3] }} {{ row[4] }}</td>
+          <td class="table-number">{{ row[5] }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
