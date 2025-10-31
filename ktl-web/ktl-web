@@ -3,13 +3,34 @@
 import argparse
 import flask
 import numpy as np
+import os
 import re
 
 import ktl_query
 
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
+
+db_file_path = ''
 conn = None
+last_mtime = None
 app = flask.Flask(__name__)
+
+
+class FileHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        global conn, last_mtime
+        print(f'{event.src_path} - {os.path.abspath(db_file_path)}')
+        if os.path.abspath(event.src_path) == os.path.abspath(db_file_path):
+            try:
+                if conn:
+                    conn.close()
+                conn = ktl_query.load(db_file_path)
+                last_mtime = os.path.getmtime(db_file_path)
+                print(f"[DB] Reloaded connection due to file change: {db_file_path}")
+            except Exception as e:
+                print(f"[DB] Failed to reload DB: {e}")
 
 
 @app.route("/", methods=["GET"])
@@ -231,5 +252,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='ktl-web', description='Web server for KTL')
     parser.add_argument('db_file_path')
     args = parser.parse_args()
-    conn = ktl_query.load(args.db_file_path)
+
+    db_file_path = args.db_file_path
+    conn = ktl_query.load(db_file_path)
+    last_mtime = os.path.getmtime(db_file_path)
+
+    observer = Observer()
+    observer.schedule(FileHandler(), path=os.path.abspath(db_file_path), recursive=False)
+    observer.start()
+
     app.run(debug=True)

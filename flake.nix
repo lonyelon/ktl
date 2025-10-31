@@ -26,6 +26,7 @@
       propagatedBuildInputs = with python.pkgs; [
         flask
         numpy
+        watchdog
         self.packages.${system}.ktl-query
       ];
 
@@ -43,6 +44,7 @@
         python.pkgs.flask
         python.pkgs.numpy
         python.pkgs.pyyaml
+        python.pkgs.watchdog
         (self.packages.${system}.ktl-query)
       ];
     };
