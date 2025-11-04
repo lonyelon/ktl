@@ -8,6 +8,17 @@ import sys
 import yaml
 
 
+def _dict_to_string(D: dict, prefix='') -> str:
+    L = []
+    for k, v in D.items():
+        if isinstance(v, dict):
+            L += [f'{prefix}{k}:']
+            L += _dict_to_string(v, prefix=f'{prefix}  ')
+        else:
+            print(v)
+            L += [f'{prefix}{k}: {v}']
+    return L
+
 class _ExerciseSet:
     value: float = 0.0
     unit: str    = 'kg'
@@ -142,13 +153,37 @@ def load(file):
 
     if 'config' in data:
         if 'tags' in data['config']:
+            if not isinstance(data['config']['tags'], list):
+                raise ValueError('config.tags is not a list.')
             for tag in data['config']['tags']:
+                if not isinstance(tag, str):
+                    raise ValueError(f'config.tags has an element "{tag}" that is not a string.')
                 cursor.execute(f'INSERT INTO tags VALUES ("{tag}")')
         if 'exercises' in data['config']:
+            if not isinstance(data['config']['exercises'], dict):
+                raise ValueError('config.exercises is not a dictionary.')
             for exercise_name, exercise_data in data['config']['exercises'].items():
+                if not isinstance(exercise_data, dict):
+                    raise ValueError(f'config.exercises.{exercise_name} is not a dictionary.')
+
+                for k in exercise_data.keys():
+                    if k not in ['type', 'tags']:
+                        raise ValueError(f'config.exercises.{exercise_name}.{k} is not a valid key.')
+
+                if 'type' not in exercise_data:
+                    raise ValueError(f'config.exercises.{exercise_name}.type is mandatory.')
+
+                if exercise_data['type'] not in ['strength', 'distance-cardio']:
+                    raise ValueError(f'config.exercises.{exercise_name}.type has to be either "strength" or "distance-cardio".')
+
                 cursor.execute(f'INSERT INTO exercises VALUES ("{exercise_name}", "{exercise_data["type"]}")')
+
                 if 'tags' in exercise_data:
+                    if not isinstance(exercise_data['tags'], list):
+                        raise ValueError(f'config.exercises.{exercise_name}.tags must be a list.')
                     for tag in exercise_data['tags']:
+                        if not isinstance(tag, str):
+                            raise ValueError(f'config.exercises.{exercise_name}.tags.{tag} must be a string.')
                         cursor.execute(f'INSERT INTO exercise_tags VALUES ("{exercise_name}", "{tag}")')
         else:
             raise KeyError('No exercises defined in config.exercises')
@@ -157,6 +192,10 @@ def load(file):
 
     if 'journal' in data:
         for date_name, date_data in sorted(data['journal'].items()):
+            for k in date_data.keys():
+                if k not in ['workout', 'nutrition', 'measurements']:
+                    raise ValueError(f'journal.{date_name}.{k} is not a valid key.')
+
             if 'workout' in date_data:
                 for exercise_name, exercise_data in date_data['workout'].items():
                     if exercise_name in data['config']['exercises']:
@@ -177,21 +216,33 @@ def load(file):
             if 'nutrition' in date_data:
                 if 'calories' in date_data['nutrition']:
                     if isinstance(date_data['nutrition']['calories'], dict):
-                        if not 'min' in date_data['nutrition']['calories']:
-                            raise NameError(f'journal.{date_name}.nutrition.calories is a dict but has no "min" key')
-                        if not 'max' in date_data['nutrition']['calories']:
-                            raise NameError(f'journal.{date_name}.nutrition.calories is a dict but has no "max" key')
+                        if set(date_data['nutrition']['calories'].keys()) != set(['min', 'max']):
+                            raise NameError((
+                                f'journal.{date_name}.nutrition.calories is a dict with wrong keys.\n'
+                                'Expected:\n'
+                                f'  {date_name}:\n'
+                                '    calories:\n'
+                                '      min: ...\n'
+                                '      max: ...\n'
+                                'Got:\n'
+                                f'  {date_name}:\n'
+                                '    nutrition:\n'
+                            ) + '\n'.join(_dict_to_string(date_data['nutrition'], prefix='      ')))
                         calories = (date_data['nutrition']['calories']['min'] + date_data['nutrition']['calories']['max']) / 2
                         cursor.execute(f'INSERT INTO nutrition VALUES ("{date_name}", "{int(calories)}")')
                     else:
                         cursor.execute(f'INSERT INTO nutrition VALUES ("{date_name}", "{date_data["nutrition"]["calories"]}")')
             if 'measurements' in date_data:
+                for k in date_data['measurements'].keys():
+                    if k not in ['weight']:
+                        raise ValueError(f'journal.{date_name}.measurements.{k} is not a valid entry.')
+
                 if 'weight' in date_data['measurements']:
                     weight = re.sub(r'[a-z]+$', '', date_data['measurements']['weight'])
                     unit = re.sub(r'^[0-9]+(\.[0-9]+)?', '', date_data['measurements']['weight'])
 
                     if unit != 'kg' and unit != 'lbs':
-                        raise ValueError(f'journal.{date_name}.meassuremets.weight has an invalid unit: "{unit}"')
+                        raise ValueError(f'journal.{date_name}.measuremets.weight has an invalid unit: "{unit}"')
 
                     cursor.execute(f'''
                         INSERT INTO measurements
