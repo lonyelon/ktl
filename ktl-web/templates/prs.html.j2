@@ -19,7 +19,7 @@
       <tbody>
         {% for i, row in rows %}
           <tr class='table-row-{{ i % 2 }}'>
-            <td><a href="/training-log?exercise={{ row[0] }}">{{ row[0] }}</a></td>
+            <td><a href="/log?exercise={{ row[0] }}">{{ row[0] }}</a></td>
             <td class="table-number">{{ row[1] }}</td>
             <td class="table-number">{{ row[2] }}</td>
             <td class="table-number">{{ row[3] }}</td>

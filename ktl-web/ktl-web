@@ -217,8 +217,8 @@ def training_plan():
     return flask.render_template('training-plan.html.j2', days=out_data)
 
 
-@app.route("/training-log", methods=["GET"])
-def training_log():
+@app.route("/log", methods=["GET"])
+def handle_log():
     date = flask.request.args.get("date")
     exercise = flask.request.args.get("exercise")
 
@@ -250,7 +250,7 @@ def training_log():
 
     prs = enumerate(get_prs_for_exercise(exercise=exercise)) if exercise else None
 
-    return flask.render_template('training-log.html.j2', data=data, exercise=exercise, prs=prs)
+    return flask.render_template('log.html.j2', data=data, exercise=exercise, prs=prs)
 
 
 if __name__ == "__main__":

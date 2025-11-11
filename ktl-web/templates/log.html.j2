@@ -106,8 +106,8 @@
     <tbody>
       {% for row in data %}
         <tr class='table-row-{{row[0]}}'>
-          <td><a href="/training-log?date={{ row[1] }}">{{ row[1] }}</a></td>
-          <td class="table-number"><a href="/training-log?exercise={{ row[2] }}">{{ row[2] }}</a></td>
+          <td><a href="/log?date={{ row[1] }}">{{ row[1] }}</a></td>
+          <td class="table-number"><a href="/log?exercise={{ row[2] }}">{{ row[2] }}</a></td>
           <td class="table-number">{{ row[3] }} {{ row[4] }}</td>
           <td class="table-number">{{ row[5] }}</td>
         </tr>
