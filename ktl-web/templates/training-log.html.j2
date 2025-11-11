@@ -2,7 +2,9 @@
 {% block content %}
   {% if exercise is not none %}
     <h2>Training log for the {{exercise}}</h2>
+
     <canvas id="trainingChart" width="800" height="400"></canvas>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
     <script>
@@ -63,9 +65,34 @@
         }
       });
     </script>
-  {% else %}
-    <h2>Training log</h2>
+
+    {% if prs %}
+      <h2>PRs</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Exercise</th>
+            <th>Reps</th>
+            <th>Weight</th>
+            <th>Estimated 1RM</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i, row in prs %}
+            <tr class='table-row-{{ i % 2 }}'>
+              <td><a href="/prs?exercise={{ row[0] }}">{{ row[0] }}</a></td>
+              <td class="table-number">{{ row[1] }}</td>
+              <td class="table-number">{{ row[2] }}</td>
+              <td class="table-number">{{ row[3] }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
   {% endif %}
+
+  <h2>Training log</h2>
 
   <table>
     <thead>

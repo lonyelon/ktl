@@ -38,12 +38,10 @@ def index():
     return flask.render_template('index.html.j2')
 
 
-@app.route("/prs", methods=["GET"])
-def prs():
-    exercise = flask.request.args.get("exercise")
-    rows = []
+def get_prs_for_exercise(exercise = ''):
+    prs = []
     cursor = conn.cursor()
-    if exercise:
+    if exercise != '':
         query = f'''
             SELECT exercise, reps, MAX(weight), unit
             FROM strength_sets
@@ -71,15 +69,20 @@ def prs():
                 float(row[2]) * 36 / (37 - float(row[1])),
                 float(row[2]) * pow(float(row[1]), 0.1)
             ])
-            rows += [(
+            prs += [(
                 row[0],
                 row[1],
                 f"{re.sub(r'\.0+$', f'', str(row[2]))} {row[3]}",
                 f"{re.sub(r'\.0+$', f'', str(round(rm_calc * 4)/4))} {row[3]}",
             )]
             last_i = i
+    return prs
 
-    return flask.render_template('prs.html.j2', rows=enumerate(rows))
+
+@app.route("/prs", methods=["GET"])
+def prs():
+    rows = enumerate(get_prs_for_exercise())
+    return flask.render_template('prs.html.j2', rows=rows)
 
 
 def sets_to_str(L):
@@ -245,7 +248,9 @@ def training_log():
     for i, row in enumerate(in_data):
         data += [(i % 2, row[0], row[1], row[2], row[3], row[4])]
 
-    return flask.render_template('training-log.html.j2', data=data, exercise=exercise)
+    prs = enumerate(get_prs_for_exercise(exercise=exercise)) if exercise else None
+
+    return flask.render_template('training-log.html.j2', data=data, exercise=exercise, prs=prs)
 
 
 if __name__ == "__main__":
